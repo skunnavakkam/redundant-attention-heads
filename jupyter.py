@@ -37,15 +37,18 @@ volume = modal.Volume.from_name(
 CACHE_DIR = "/root/cache"
 JUPYTER_TOKEN = "1234"  # Change me to something non-guessable!
 
+HF_TOKEN = os.environ.get("HF_TOKEN")
+
 
 @app.function(
     concurrency_limit=1, volumes={CACHE_DIR: volume}, timeout=7200, gpu="A100-40gb"
 )
-def run_jupyter(timeout: int):
+def run_jupyter(timeout: int, HF_TOKEN: str):
     jupyter_port = 8888
     import os
 
     os.environ["TRANSFORMERS_CACHE"] = os.path.join(CACHE_DIR, "transformers")
+    os.environ["HF_TOKEN"] = HF_TOKEN
     with modal.forward(jupyter_port) as tunnel:
         jupyter_process = subprocess.Popen(
             [
@@ -78,7 +81,7 @@ def run_jupyter(timeout: int):
 def main():
     # Write some images to a volume, for demonstration purposes.
     # Run the Jupyter Notebook server
-    run_jupyter.remote(timeout=7200)
+    run_jupyter.remote(timeout=7200, HF_TOKEN=HF_TOKEN)
 
 
 # Doing `modal run jupyter_inside_modal.py` will run a Modal app which starts
